@@ -1,4 +1,15 @@
-# cordova-plugin-cocoapod-support
+# cordova-plugin-cocoapod-supportx
+This plugin is a fork of [cordova-plugin-cocoapods-support](https://github.com/blakgeek/cordova-plugin-cocoapods-support) which has been updated to fix several issues.
+
+
+<!-- DONATE -->
+[![donate](https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG_global.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=ZRD3W47HQ3EMJ)
+
+I dedicate a considerable amount of my free time to developing and maintaining this Cordova plugin, along with my other Open Source software.
+To help ensure this plugin is kept updated, new features are added and bugfixes are implemented quickly, please donate a couple of dollars (or a little more if you can stretch) as this will help me to afford to dedicate time to its maintenance. Please consider donating if you're using this plugin in an app that makes you money, if you're being paid to make the app, if you're asking for new features or priority bug fixes.
+<!-- END DONATE -->
+
+
 Are you tired of manually adding ios dependencies in Cordova apps?  Me too.  Android has Gradle support out of the box, but
 CocoaPods get no love.  That is until now.  
 
@@ -18,13 +29,13 @@ then runs pod update for you.
 
 If you're like me and using [Cordova CLI](http://cordova.apache.org/):
 ```
-cordova plugin add cordova-plugin-cocoapod-support --save
+cordova plugin add cordova-plugin-cocoapod-supportx --save
 ```
 
 or
 
 ```
-phonegap local plugin add cordova-plugin-cocoapod-support
+phonegap local plugin add cordova-plugin-cocoapodx-support
 ```
 
 ## How do I use it?  
@@ -38,7 +49,7 @@ Plugin developers, here's a sample plugin.xml.
         A plugin demonstrating the use of CocoaPods dependencies.
     </description>
     
-    <dependency id="cordova-plugin-cocoapod-support"/>
+    <dependency id="cordova-plugin-cocoapod-supportx"/>
 
     <platform name="ios">
         <!-- optionally set minimum ios version and enable use_frameworks! -->
