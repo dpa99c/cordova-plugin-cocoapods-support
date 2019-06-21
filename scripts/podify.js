@@ -16,6 +16,8 @@ module.exports = function (context) {
         return;
     }
 
+    const args = getArgs();
+    var DEBUG = false;
     var podfileContents = [];
     var rootPath = context.opts.projectRoot;
     var configXmlPath = path.join(rootPath, 'config.xml');
@@ -41,19 +43,46 @@ module.exports = function (context) {
         pods: {},
         sources: {}
     };
+    var pluginVariables = {};
 
     if (oldMinVersion) {
         console.warn('The preference "pods_ios_min_version" has been deprecated. Please use "deployment-target" instead.');
     }
 
+    if(args['verbose']){
+        DEBUG = true;
+        log('Debug logging enabled');
+    }
+
+
     log('Searching for new pods');
 
     return Q.all(parsePluginXmls())
         .then(parseConfigXml)
+        .then(parsePackageJson)
         .then(createFiles)
         .then(installPods)
         .then(fixBundlePaths)
         .then(updateBuild);
+
+    function parsePackageJson() {
+        const deferred = Q.defer();
+        log('Checking package.json for plugin variables');
+        var packageJSON = JSON.parse(fs.readFileSync('./package.json'));
+        if(packageJSON.cordova && packageJSON.cordova.plugins){
+            for(const pluginId in packageJSON.cordova.plugins){
+                for(const varName in packageJSON.cordova.plugins[pluginId]){
+                    var varValue = packageJSON.cordova.plugins[pluginId][varName];
+                    let logMsg = `package.json - plugin ${pluginId} - variable ${varName}=${varValue}`;
+                    if(pluginVariables[varName]) logMsg += ` - overwrites existing value=${pluginVariables[varName]}`;
+                    debug(logMsg);
+                    pluginVariables[varName] = varValue;
+                }
+            }
+        }
+        deferred.resolve();
+        return deferred.promise;
+    }
 
     function parseConfigXml() {
 
@@ -69,6 +98,18 @@ module.exports = function (context) {
                             log(`config.xml requires pod: ${name}`);
                         });
                     }
+                });
+
+                log('Checking config.xml for plugin variables');
+                (data.widget.plugin || []).forEach(function (plugin) {
+                    (plugin.variable || []).forEach(function (variable) {
+                        if(variable.$.name && variable.$.value){
+                            let logMsg = `config.xml - plugin ${plugin.$.name || plugin.$.id} - variable ${variable.$.name}=${variable.$.value}`;
+                            if(pluginVariables[variable.$.name]) logMsg += ` - overwrites existing value=${pluginVariables[variable.$.name]}`;
+                            debug(logMsg);
+                            pluginVariables[variable.$.name] = variable.$.value;
+                        }
+                    });
                 });
             }
         });
@@ -121,6 +162,14 @@ module.exports = function (context) {
                                     newPods.pods[name] = Object.assign({type: 'pod'}, pod.$);
                                     log(`${id} requires pod: ${name}`);
                                 });
+
+                                // store preferences for plugin variable lookups
+                                (platform.preference || []).forEach(function (preference) {
+                                    if(preference.$.name && preference.$.default){
+                                        debug(`plugin.xml - plugin ${id} - variable ${preference.$.name}=${preference.$.default}`);
+                                        pluginVariables[preference.$.name] = preference.$.default;
+                                    }
+                                });
                             }
                         });
                     }
@@ -132,6 +181,13 @@ module.exports = function (context) {
             promises.push(deferred.promise);
         });
         return promises;
+    }
+
+    function applyPluginVariables(value) {
+        if(!value.match(/^\$(?:[^$]+)$/)) return value;
+        const varName = value.replace('$','');
+        if(!pluginVariables[varName]) return console.error(`ERROR: Plugin variable ${varName} using in podspec but no value defined`);
+        return pluginVariables[varName];
     }
 
     function createFiles() {
@@ -162,7 +218,7 @@ module.exports = function (context) {
                     bundlePathsToFix.push(pod['fix-bundle-path']);
                 }
                 if (pod.version) {
-                    suffix = `, '${pod.version}'`;
+                    suffix = `, '${applyPluginVariables(pod.version)}'`;
                 } else if (pod.git) {
                     suffix = ", :git => '" + pod.git + "'";
                     if (pod.tag) {
@@ -186,7 +242,7 @@ module.exports = function (context) {
                 } else if (pod.podspec) {
                     suffix = ", :podspec => '" + pod.podspec + "'";
                 } else if (pod.spec) {
-                    suffix = pod.spec.startsWith(':') ? `, ${pod.spec}` : `, '${pod.spec}'`;
+                    suffix = pod.spec.startsWith(':') ? `, ${pod.spec}` : `, '${applyPluginVariables(pod.spec)}'`;
                 } else {
                     suffix = '';
                 }
@@ -381,6 +437,32 @@ module.exports = function (context) {
     
     function log(message) {
         console.log(message);
+    }
+    function debug(message) {
+        if(DEBUG) console.log(`DEBUG: ${message}`);
+    }
+
+    function getArgs () {
+        const args = {};
+        process.argv
+            .slice(2, process.argv.length)
+            .forEach( arg => {
+                // long arg
+                if (arg.slice(0,2) === '--') {
+                    const longArg = arg.split('=');
+                    const longArgFlag = longArg[0].slice(2,longArg[0].length);
+                    const longArgValue = longArg.length > 1 ? longArg[1] : true;
+                    args[longArgFlag] = longArgValue;
+                }
+                // flags
+                else if (arg[0] === '-') {
+                    const flags = arg.slice(1,arg.length).split('');
+                    flags.forEach(flag => {
+                        args[flag] = true;
+                    });
+                }
+            });
+        return args;
     }
 };
 
