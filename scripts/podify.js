@@ -135,7 +135,7 @@ module.exports = function (context) {
                                 const podsConfig = (platform['pods-config'] || [])[0];
 
                                 if (podsConfig) {
-                                    iosMinVersion = maxVer(iosMinVersion, podsConfig.$ ? podsConfig.$['ios-min-version'] : iosMinVersion);
+                                    iosMinVersion = maxVer( applyPluginVariables(iosMinVersion), podsConfig.$ ? applyPluginVariables(podsConfig.$['ios-min-version']) :  applyPluginVariables(iosMinVersion));
                                     useFrameworks = podsConfig.$ && podsConfig.$['use-frameworks'] === 'true' ? 'true' : useFrameworks;
 
                                     (podsConfig.source || []).forEach(function (podSource) {
@@ -434,7 +434,7 @@ module.exports = function (context) {
             return v2;
         }
     }
-    
+
     function log(message) {
         console.log(message);
     }
