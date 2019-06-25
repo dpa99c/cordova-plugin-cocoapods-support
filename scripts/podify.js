@@ -28,6 +28,7 @@ module.exports = function (context) {
     var iosMinVersion = configParser.getPreference('deployment-target', 'ios') ||
         configParser.getPreference('deployment-target') ||
         oldMinVersion || '7.0';
+    var overrideiOSMinVersion;
     var useFrameworks = configParser.getPreference('pods_use_frameworks', 'ios') || configParser.getPreference('pods_use_frameworks') || 'false';
     var podConfigPath = path.join(rootPath, 'platforms', 'ios', '.pods.json');
     var pod, podName;
@@ -135,7 +136,7 @@ module.exports = function (context) {
                                 const podsConfig = (platform['pods-config'] || [])[0];
 
                                 if (podsConfig) {
-                                    iosMinVersion = maxVer( applyPluginVariables(iosMinVersion), podsConfig.$ ? applyPluginVariables(podsConfig.$['ios-min-version']) :  applyPluginVariables(iosMinVersion));
+                                    overrideiOSMinVersion = podsConfig.$ ? podsConfig.$['ios-min-version'] : null;
                                     useFrameworks = podsConfig.$ && podsConfig.$['use-frameworks'] === 'true' ? 'true' : useFrameworks;
 
                                     (podsConfig.source || []).forEach(function (podSource) {
@@ -184,14 +185,16 @@ module.exports = function (context) {
     }
 
     function applyPluginVariables(value) {
-        if(!value.match(/^\$(?:[^$]+)$/)) return value;
+        if(!value || !value.match(/^\$(?:[^$]+)$/)) return value;
         const varName = value.replace('$','');
         if(!pluginVariables[varName]) return console.error(`ERROR: Plugin variable ${varName} using in podspec but no value defined`);
         return pluginVariables[varName];
     }
 
     function createFiles() {
-
+        if(overrideiOSMinVersion){
+            iosMinVersion = maxVer(iosMinVersion, applyPluginVariables(overrideiOSMinVersion));
+        }
         newPods.iosMinVersion = iosMinVersion;
         newPods.useFrameworks = useFrameworks === 'true';
 
