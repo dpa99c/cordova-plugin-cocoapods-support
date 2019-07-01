@@ -1,6 +1,6 @@
 {
   "name": "cordova-plugin-cocoapod-supportx",
-  "version": "1.7.2",
+  "version": "1.7.3",
   "description": "A Cordova/PhoneGap plugin to add support for Cocoapod dependencies.",
   "cordova": {
     "id": "cordova-plugin-cocoapod-supportx",
