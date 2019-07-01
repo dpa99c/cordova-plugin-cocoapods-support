@@ -52,25 +52,31 @@ Plugin developers, here's a sample plugin.xml.
     <dependency id="cordova-plugin-cocoapod-supportx"/>
 
     <platform name="ios">
-        <!-- optionally set minimum ios version and enable use_frameworks! -->
-        <pods-config ios-min-version="9.0" use-frameworks="true">
+        <!-- optionally set minimum ios version, enable use_frameworks and strip debug symbols -->
+        <pods-config ios-min-version="9.0" use-frameworks="true" strip-debug="true">
              <!-- optionally add private spec sources -->
             <source url="git@github.com:foo/foo-specs.git"/>
             <source url="git@github.com:bar/bar-specs.git"/>
         </pods-config>
+
         <!-- use the latest version of a pod -->
         <pod name="LatestPod" />
+
         <!-- use a specific version of a pod -->
         <pod name="VersionedPod" version="1.0.0" />
+
         <!-- use a custom repo -->
         <pod name="GitPod1" git="https://github.com/blakgeek/something" tag="v1.0.1" />
         <pod name="GitPod2" git="https://github.com/blakgeek/something" branch="wood" />
         <pod name="GitPod3" git="https://github.com/blakgeek/something" commit="1b33368" />
+
         <!-- target specific configurations, this can be combined with all other options -->
         <pod name="Foobar" configuration="debug" />
         <pod name="Foobar" configurations="release,debug" />
+
         <!-- add a pod dependency using a custom podspec -->
         <pod name="JSONKit" podspec="https://example.com/JSONKit.podspec" />
+
         <!-- add pod dependency using the spec parameter like a Cordova framework -->
         <pod name="JustLikeCordova" spec="~> 2.0.0"/>
         <pod name="JustLikeCordova" spec=":configurations => ['Debug', 'Beta']"/>
@@ -92,24 +98,35 @@ This is useful if you need to resolve conflicts between plugins or if a plugin d
     <platform name="ios">
         <!-- set platform :ios, defaults to 7.0 -->
         <preference name="pods_ios_min_version" value="8.0"/>
+
         <!-- add use_frameworks! to Podfile, this also disabled bridging headers -->
         <preference name="pods_use_frameworks" value="true"/>
+
+        <!-- strips debug symbols from pods - see https://stackoverflow.com/a/48518656/777265 -->
+        <preference name="pods_strip_debug" value="true"/>
+
         <!-- use the latest version of a pod -->
         <pod name="LatestPod" />
+
         <!-- use a specific version of a pod -->
         <pod name="VersionedPod" version="1.0.0" />
+
         <!-- use a custom repo -->
         <pod name="GitPod1" git="https://github.com/blakgeek/something" tag="v1.0.1" />
         <pod name="GitPod2" git="https://github.com/blakgeek/something" branch="wood" />
         <pod name="GitPod3" git="https://github.com/blakgeek/something" commit="1b33368" />
+
         <!-- target specific configurations, this can be combined with all other options -->
         <pod name="Foobar" configuration="debug" />
         <pod name="Foobar" configurations="release,debug" />
+
         <!-- add a pod dependency using a custom podspec -->
         <pod name="JSONKit" podspec="https://example.com/JSONKit.podspec" />
+
         <!-- add a pod dependency using the spec parameter like a Cordova framework -->
         <pod name="JustLikeCordova" spec="~> 2.0.0"/>
         <pod name="JustLikeCordova" spec=":configurations => ['Debug', 'Beta']"/>
+
         <!-- if pod uses a bundle that isn't compatible with Cocoapods 1.x -->
         <pod name="BadBundle" fix-bundle-path="Bad/Path.bundle"/>
     </platform>

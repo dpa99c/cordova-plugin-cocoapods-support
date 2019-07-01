@@ -30,6 +30,7 @@ module.exports = function (context) {
         oldMinVersion || '7.0';
     var overrideiOSMinVersion;
     var useFrameworks = configParser.getPreference('pods_use_frameworks', 'ios') || configParser.getPreference('pods_use_frameworks') || 'false';
+    var stripDebugSymbols = configParser.getPreference('pods_strip_debug', 'ios') || configParser.getPreference('pods_strip_debug') || 'false';
     var podConfigPath = path.join(rootPath, 'platforms', 'ios', '.pods.json');
     var pod, podName;
     var podified = fs.existsSync(podConfigPath);
@@ -136,8 +137,10 @@ module.exports = function (context) {
                                 const podsConfig = (platform['pods-config'] || [])[0];
 
                                 if (podsConfig) {
+                                    debug(`found pods-config in ${id}`);
                                     overrideiOSMinVersion = podsConfig.$ ? podsConfig.$['ios-min-version'] : null;
                                     useFrameworks = podsConfig.$ && podsConfig.$['use-frameworks'] === 'true' ? 'true' : useFrameworks;
+                                    stripDebugSymbols = podsConfig.$ && podsConfig.$['strip-debug'] ? podsConfig.$['strip-debug'] : stripDebugSymbols;
 
                                     (podsConfig.source || []).forEach(function (podSource) {
                                         log(`${id} requires pod source: ${podSource.$.url}`);
@@ -253,6 +256,19 @@ module.exports = function (context) {
                 podfileContents.push(`\tpod '${podName}'${suffix}`);
             }
             podfileContents.push('end');
+
+            stripDebugSymbols = applyPluginVariables(stripDebugSymbols);
+            if(stripDebugSymbols === 'true'){
+                log("Stripping debug symbols from pods");
+                podfileContents.push("post_install do |installer|\n" +
+                    "    installer.pods_project.targets.each do |target|\n" +
+                    "        target.build_configurations.each do |config|\n" +
+                    "            config.build_settings['DEBUG_INFORMATION_FORMAT'] = 'dwarf'\n" +
+                    "        end\n" +
+                    "    end\n" +
+                    "end")
+            }
+
             fs.writeFileSync('platforms/ios/Podfile', podfileContents.join('\n'));
 
             var debugXcContents = fs.readFileSync('platforms/ios/cordova/build-debug.xcconfig', 'utf8');
